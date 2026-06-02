@@ -3,6 +3,9 @@ node_modules/
 
 # Environment variables
 .env
+.env.local
+serviceAccountKey.json
+*.json.backup
 
 # Logs
 logs/

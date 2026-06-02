@@ -6,6 +6,12 @@ const morgan = require('morgan');
 const securityMiddleware = require('./middleware/securityMiddleware');
 const sitemapRouter = require('./router/sitemapRouter');
 
+// Initialize Firebase if using Firestore
+const DATABASE_TYPE = process.env.DATABASE_TYPE || 'mongodb';
+if (DATABASE_TYPE === 'firestore') {
+  require('./src/config/firebase');
+}
+
 const app = express();
 
 // ============= SECURITY & COMPRESSION =============
@@ -36,17 +42,28 @@ app.use(securityMiddleware.corsConfig);
 app.use(securityMiddleware.generalLimiter);
 
 // ============= DATABASE CONNECTION =============
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB error:', err));
+// MongoDB connection (optional, only if MONGODB_URI is provided)
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB error:', err));
+} else {
+  console.log(`Using ${DATABASE_TYPE.toUpperCase()} as database`);
+}
 
 // ============= ROUTES =============
 
 // Sitemap and robots
 app.use('/', sitemapRouter);
+
+// Firebase Routes
+if (DATABASE_TYPE === 'firestore') {
+  app.use('/api/tour-packages-firebase', require('./src/router/tourPackageFirebaseRouter'));
+  console.log('✅ Firebase routes loaded');
+}
 
 // API Routes with auth limiter
 // app.use('/api/auth', securityMiddleware.authLimiter, require('./router/adminAuthRouter'));
@@ -79,7 +96,9 @@ process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
   server.close(() => {
     console.log('Server closed');
-    mongoose.connection.close(false);
+    if (process.env.MONGODB_URI) {
+      mongoose.connection.close(false);
+    }
   });
 });
 
