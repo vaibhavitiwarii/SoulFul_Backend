@@ -96,8 +96,14 @@ exports.corsConfig = cors({
 });
 
 // HTTPS redirect middleware
+// Disabled for cloud deployments (Render, Heroku, etc) that use reverse proxies
 exports.httpsRedirect = (req, res, next) => {
-  if (process.env.NODE_ENV === 'production' && !req.secure) {
+  // Only enforce HTTPS on self-hosted servers, not on cloud platforms
+  // Cloud platforms handle SSL at the reverse proxy level
+  if (process.env.NODE_ENV === 'production' && 
+      !req.secure && 
+      !req.get('x-forwarded-proto') &&
+      process.env.RENDER !== 'true') {
     return res.redirect(301, `https://${req.get('host')}${req.url}`);
   }
   next();
