@@ -2,10 +2,24 @@ const admin = require('firebase-admin');
 const path = require('path');
 
 // Initialize Firebase Admin SDK
+// Support both local file and environment variable
+let serviceAccountKey;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  // For production (Render) - read from environment variable
+  try {
+    serviceAccountKey = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  } catch (error) {
+    console.error('Error parsing FIREBASE_SERVICE_ACCOUNT_JSON environment variable:', error);
+    process.exit(1);
+  }
+} else {
+  // For local development - read from file
+  serviceAccountKey = require(path.join(__dirname, '../../serviceAccountKey.json'));
+}
+
 admin.initializeApp({
-  credential: admin.credential.cert(
-    require(path.join(__dirname, '../../serviceAccountKey.json'))
-  ),
+  credential: admin.credential.cert(serviceAccountKey),
 });
 
 const db = admin.firestore();
@@ -14,5 +28,7 @@ const db = admin.firestore();
 db.settings({
   ignoreUndefinedProperties: true,
 });
+
+console.log('✅ Firebase initialized successfully');
 
 module.exports = { admin, db };
