@@ -31,4 +31,6 @@ const cmsContentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('CmsContent', cmsContentSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('CmsContent', 'cmsContents')
+  : mongoose.model('CmsContent', cmsContentSchema);

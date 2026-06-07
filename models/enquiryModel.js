@@ -12,4 +12,6 @@ const enquirySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Enquiry', enquirySchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('Enquiry', 'enquiries')
+  : mongoose.model('Enquiry', enquirySchema);

@@ -24,4 +24,6 @@ const destinationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Destination', destinationSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('Destination', 'destinations')
+  : mongoose.model('Destination', destinationSchema);

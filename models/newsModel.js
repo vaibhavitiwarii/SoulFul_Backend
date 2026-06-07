@@ -12,4 +12,6 @@ const newsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('News', newsSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('News', 'news')
+  : mongoose.model('News', newsSchema);

@@ -13,4 +13,6 @@ const galleryItemSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('GalleryItem', galleryItemSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('GalleryItem', 'galleryItems')
+  : mongoose.model('GalleryItem', galleryItemSchema);

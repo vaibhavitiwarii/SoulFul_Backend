@@ -7,4 +7,6 @@ const activitySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Activity', activitySchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('Activity', 'activities')
+  : mongoose.model('Activity', activitySchema);

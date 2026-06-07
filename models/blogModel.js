@@ -17,4 +17,6 @@ const blogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Blog', blogSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('Blog', 'blogs')
+  : mongoose.model('Blog', blogSchema);

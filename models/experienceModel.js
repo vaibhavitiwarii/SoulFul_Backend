@@ -27,4 +27,6 @@ const experienceSchema = new mongoose.Schema({
   timestamps: true // Automatically adds createdAt and updatedAt fields
 });
 
-module.exports = mongoose.model('Experience', experienceSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('Experience', 'experiences')
+  : mongoose.model('Experience', experienceSchema);

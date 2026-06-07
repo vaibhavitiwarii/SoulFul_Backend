@@ -13,4 +13,6 @@ const reviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Review', reviewSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('Review', 'reviews')
+  : mongoose.model('Review', reviewSchema);

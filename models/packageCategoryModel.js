@@ -11,4 +11,6 @@ const packageCategorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('PackageCategory', packageCategorySchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('PackageCategory', 'packageCategories')
+  : mongoose.model('PackageCategory', packageCategorySchema);

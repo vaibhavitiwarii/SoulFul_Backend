@@ -5,6 +5,12 @@ require('dotenv').config();
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/TrawelWeb';
 
 const connectDB = async () => {
+  if (process.env.DATABASE_TYPE === 'firestore') {
+    require('./config/firebase');
+    console.log('Using Firestore as database');
+    return;
+  }
+
   try {
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,

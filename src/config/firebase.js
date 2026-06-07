@@ -15,12 +15,18 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
   }
 } else {
   // For local development - read from file
-  serviceAccountKey = require(path.join(__dirname, '../../serviceAccountKey.json'));
+  try {
+    serviceAccountKey = require(path.join(__dirname, '../../serviceAccountKey.json'));
+  } catch (error) {
+    serviceAccountKey = require(path.join(__dirname, '../../soulful-backend-firebase-adminsdk-fbsvc-6960dc5eae.json'));
+  }
 }
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccountKey),
-});
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccountKey),
+  });
+}
 
 const db = admin.firestore();
 

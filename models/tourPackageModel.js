@@ -66,4 +66,6 @@ const tourPackageSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('TourPackage', tourPackageSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('TourPackage', 'tourPackages')
+  : mongoose.model('TourPackage', tourPackageSchema);

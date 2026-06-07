@@ -17,4 +17,6 @@ const destinationSchema = new mongoose.Schema({
   }]
 });
 
-module.exports = mongoose.model('BestTimeDestination', destinationSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('BestTimeDestination', 'bestTimeDestinations')
+  : mongoose.model('BestTimeDestination', destinationSchema);

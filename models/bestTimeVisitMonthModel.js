@@ -15,4 +15,6 @@ const visitMonthSchema = new mongoose.Schema({
   climateNotes: String
 });
 
-module.exports = mongoose.model('VisitMonth', visitMonthSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('VisitMonth', 'visitMonths')
+  : mongoose.model('VisitMonth', visitMonthSchema);

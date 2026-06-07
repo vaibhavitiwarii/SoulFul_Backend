@@ -89,7 +89,10 @@ app.use('/api/admin/stats', adminStatsRouter);
 app.use('/api/admin/upload', adminUploadRouter);
 app.use('/api/public', publicRouter);
 app.use('/api/tours', tourPackagesRouter);
-//app.use('/api/contact', contactRouter);
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'Server is running', timestamp: new Date() });
+});
 
 
 // Sample route

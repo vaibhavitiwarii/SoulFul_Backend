@@ -10,4 +10,6 @@ const adminUserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('AdminUser', adminUserSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('AdminUser', 'adminUsers')
+  : mongoose.model('AdminUser', adminUserSchema);

@@ -20,4 +20,6 @@ const bestTimeTourPackageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('BestTimeTourPackage', bestTimeTourPackageSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('BestTimeTourPackage', 'bestTimeTourPackages')
+  : mongoose.model('BestTimeTourPackage', bestTimeTourPackageSchema);

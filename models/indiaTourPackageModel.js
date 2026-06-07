@@ -41,4 +41,6 @@ const indiaTourPackageSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('IndiaTourPackage', indiaTourPackageSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('IndiaTourPackage', 'indiaTourPackages')
+  : mongoose.model('IndiaTourPackage', indiaTourPackageSchema);

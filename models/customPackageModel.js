@@ -28,4 +28,6 @@ const customPackageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('CustomPackage', customPackageSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('CustomPackage', 'customPackages')
+  : mongoose.model('CustomPackage', customPackageSchema);

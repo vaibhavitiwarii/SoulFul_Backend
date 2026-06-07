@@ -10,4 +10,6 @@ const tourOfIndiaCategorySchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('TourOfIndiaCategory', tourOfIndiaCategorySchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('TourOfIndiaCategory', 'charDhamYatras')
+  : mongoose.model('TourOfIndiaCategory', tourOfIndiaCategorySchema);

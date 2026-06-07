@@ -52,4 +52,6 @@ const travelGuideSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('TravelGuide', travelGuideSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('TravelGuide', 'travelGuides')
+  : mongoose.model('TravelGuide', travelGuideSchema);

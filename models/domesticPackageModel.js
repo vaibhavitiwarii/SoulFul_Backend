@@ -24,4 +24,6 @@ const domesticPackageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('DomesticPackage', domesticPackageSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('DomesticPackage', 'domesticPackages')
+  : mongoose.model('DomesticPackage', domesticPackageSchema);

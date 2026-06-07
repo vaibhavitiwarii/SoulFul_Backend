@@ -10,4 +10,6 @@ const popularPackageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('PopularPackage', popularPackageSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('PopularPackage', 'popularPackages')
+  : mongoose.model('PopularPackage', popularPackageSchema);

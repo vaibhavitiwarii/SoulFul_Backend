@@ -16,4 +16,6 @@ const bestTimeToVisitSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('BestTimeToVisit', bestTimeToVisitSchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('BestTimeToVisit', 'bestTimeToVisits')
+  : mongoose.model('BestTimeToVisit', bestTimeToVisitSchema);

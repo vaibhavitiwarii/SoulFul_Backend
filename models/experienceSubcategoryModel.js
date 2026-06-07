@@ -37,4 +37,6 @@ const experienceSubcategorySchema = new mongoose.Schema({
   timestamps: true // Automatically adds createdAt and updatedAt fields
 });
 
-module.exports = mongoose.model('ExperienceSubcategory', experienceSubcategorySchema);
+module.exports = process.env.DATABASE_TYPE === 'firestore'
+  ? require('../utils/firestoreModel')('ExperienceSubcategory', 'experienceSubcategories')
+  : mongoose.model('ExperienceSubcategory', experienceSubcategorySchema);

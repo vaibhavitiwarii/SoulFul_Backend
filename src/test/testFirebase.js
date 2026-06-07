@@ -95,9 +95,9 @@ const testFirebase = async () => {
     });
 
     console.log('\n✨ You can now:');
-    console.log('   - Update: PUT /api/tour-packages-firebase/<id>');
-    console.log('   - Delete: DELETE /api/tour-packages-firebase/<id>');
-    console.log('   - Get: GET /api/tour-packages-firebase/<id>');
+    console.log('   - Update: PUT /api/tours/<id>');
+    console.log('   - Delete: DELETE /api/tours/<id>');
+    console.log('   - Get list: GET /api/tours');
 
     process.exit(0);
   } catch (error) {
