@@ -1,21 +1,40 @@
 const CustomPackage = require('../models/customPackageModel');
 const { logActivity } = require('../services/activityService');
 const slugify = require('../utils/slugify');
+const cloudinary = require('../src/config/cloudinary');
 
-const buildImages = req => {
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'custom-packages' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
+
+const buildImages = async req => {
+  let allFiles = [];
   if (Array.isArray(req.files)) {
-    return req.files.map(file => `/uploads/${file.filename}`);
+    allFiles = req.files;
+  } else if (req.files?.images) {
+    allFiles = req.files.images;
+  } else if (req.files?.image) {
+    allFiles = req.files.image;
+  } else if (req.file) {
+    allFiles = [req.file];
   }
-  if (req.files?.images) {
-    return req.files.images.map(file => `/uploads/${file.filename}`);
+  
+  const urls = [];
+  for (const file of allFiles) {
+    urls.push(await uploadToCloudinary(file));
   }
-  if (req.files?.image) {
-    return req.files.image.map(file => `/uploads/${file.filename}`);
-  }
-  if (req.file) {
-    return [`/uploads/${req.file.filename}`];
-  }
-  return [];
+  return urls;
 };
 
 const parseBoolean = value => {
@@ -42,7 +61,7 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const images = buildImages(req);
+  const images = await buildImages(req);
   const slugSource = req.body.slug || req.body.title;
   const payload = {
     ...req.body,
@@ -71,7 +90,7 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const uploadedImages = buildImages(req);
+  const uploadedImages = await buildImages(req);
   const existingImages = parseExistingImages(req.body.existingImages);
   const mergedImages = existingImages ? [...existingImages, ...uploadedImages] : undefined;
   const slugSource = req.body.slug || req.body.title;

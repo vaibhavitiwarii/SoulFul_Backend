@@ -1,6 +1,22 @@
 const express = require('express');
 const upload = require('../middleware/upload');
 const { authMiddleware, requireAdmin } = require('../middleware/auth');
+const cloudinary = require('../src/config/cloudinary');
+
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'uploads' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
 
 const router = express.Router();
 
@@ -10,11 +26,11 @@ router.post(
   authMiddleware,
   requireAdmin,
   upload.single('image'),
-  (req, res) => {
+  async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' });
     }
-    const url = `/uploads/${req.file.filename}`;
+    const url = await uploadToCloudinary(req.file);
     return res.json({ url });
   }
 );

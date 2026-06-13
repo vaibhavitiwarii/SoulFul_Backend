@@ -1,5 +1,21 @@
 const News = require('../models/newsModel');
 const { logActivity } = require('../services/activityService');
+const cloudinary = require('../src/config/cloudinary');
+
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'news' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
 
 const parseBoolean = value => {
   if (value === undefined) return undefined;
@@ -12,7 +28,7 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+  const imageUrl = req.file ? await uploadToCloudinary(req.file) : undefined;
   const payload = {
     ...req.body,
     imageUrl,
@@ -24,7 +40,7 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+  const imageUrl = req.file ? await uploadToCloudinary(req.file) : undefined;
   const payload = {
     ...req.body,
     imageUrl: imageUrl || req.body.existingImageUrl,

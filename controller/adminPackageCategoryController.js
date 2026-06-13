@@ -1,6 +1,25 @@
 const PackageCategory = require('../models/packageCategoryModel');
 const { logActivity } = require('../services/activityService');
 const slugify = require('../utils/slugify');
+const cloudinary = require('../src/config/cloudinary');
+
+// 🔥 Upload single image to Cloudinary (works with memoryStorage)
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'categories' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer); // send buffer instead of file.path
+  });
+
+  return result.secure_url;
+};
 
 const parseBoolean = value => {
   if (value === undefined) return undefined;
@@ -13,39 +32,53 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const image = req.file ? `/uploads/${req.file.filename}` : undefined;
-  const slugSource = req.body.slug || req.body.title;
-  const payload = {
-    ...req.body,
-    image,
-    isActive: parseBoolean(req.body.isActive)
-  };
-  if (slugSource) {
-    payload.slug = slugify(slugSource);
+  try {
+    const image = req.file ? await uploadToCloudinary(req.file) : undefined;
+    const slugSource = req.body.slug || req.body.title;
+
+    const payload = {
+      ...req.body,
+      image,
+      isActive: parseBoolean(req.body.isActive)
+    };
+
+    if (slugSource) {
+      payload.slug = slugify(slugSource);
+    }
+
+    const doc = await PackageCategory.create(payload);
+    await logActivity(`Added package category: ${doc.title}`);
+    res.status(201).json(doc);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  const doc = await PackageCategory.create(payload);
-  await logActivity(`Added package category: ${doc.title}`);
-  res.status(201).json(doc);
 };
 
 exports.update = async (req, res) => {
-  const image = req.file ? `/uploads/${req.file.filename}` : undefined;
-  const slugSource = req.body.slug || req.body.title;
-  const payload = {
-    ...req.body,
-    image: image || req.body.existingImage,
-    isActive: parseBoolean(req.body.isActive)
-  };
-  if (slugSource) {
-    payload.slug = slugify(slugSource);
-  }
+  try {
+    const image = req.file ? await uploadToCloudinary(req.file) : undefined;
+    const slugSource = req.body.slug || req.body.title;
 
-  const doc = await PackageCategory.findByIdAndUpdate(req.params.id, payload, { new: true });
-  if (!doc) {
-    return res.status(404).json({ message: 'Category not found' });
+    const payload = {
+      ...req.body,
+      image: image || req.body.existingImage,
+      isActive: parseBoolean(req.body.isActive)
+    };
+
+    if (slugSource) {
+      payload.slug = slugify(slugSource);
+    }
+
+    const doc = await PackageCategory.findByIdAndUpdate(req.params.id, payload, { new: true });
+    if (!doc) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    await logActivity(`Updated package category: ${doc.title}`);
+    return res.json(doc);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  await logActivity(`Updated package category: ${doc.title}`);
-  return res.json(doc);
 };
 
 exports.remove = async (req, res) => {

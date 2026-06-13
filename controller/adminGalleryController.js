@@ -1,5 +1,21 @@
 const GalleryItem = require('../models/galleryItemModel');
 const { logActivity } = require('../services/activityService');
+const cloudinary = require('../src/config/cloudinary');
+
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'gallery', resource_type: 'auto' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
 
 const parseBoolean = value => {
   if (value === undefined) return undefined;
@@ -11,12 +27,17 @@ const getMediaType = file => {
   return file.mimetype.startsWith('video/') ? 'video' : 'image';
 };
 
-const buildItemsFromFiles = (files, basePayload) =>
-  (files || []).map(file => ({
-    ...basePayload,
-    mediaUrl: `/uploads/${file.filename}`,
-    mediaType: getMediaType(file)
-  }));
+const buildItemsFromFiles = async (files, basePayload) => {
+  const items = [];
+  for (const file of (files || [])) {
+    items.push({
+      ...basePayload,
+      mediaUrl: await uploadToCloudinary(file),
+      mediaType: getMediaType(file)
+    });
+  }
+  return items;
+};
 
 exports.list = async (req, res) => {
   const items = await GalleryItem.find().sort({ createdAt: -1 });
@@ -35,14 +56,14 @@ exports.create = async (req, res) => {
     description: req.body.description || '',
     isActive: parseBoolean(req.body.isActive)
   };
-  const items = buildItemsFromFiles(files, basePayload);
+  const items = await buildItemsFromFiles(files, basePayload);
   const docs = await GalleryItem.insertMany(items);
   await logActivity(`Added ${docs.length} gallery item(s)`);
   res.status(201).json(docs);
 };
 
 exports.update = async (req, res) => {
-  const mediaUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+  const mediaUrl = req.file ? await uploadToCloudinary(req.file) : undefined;
   const mediaType = req.file ? getMediaType(req.file) : undefined;
   const payload = {
     title: req.body.title || '',

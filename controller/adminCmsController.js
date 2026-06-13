@@ -1,5 +1,21 @@
 const CmsContent = require('../models/cmsContentModel');
 const { logActivity } = require('../services/activityService');
+const cloudinary = require('../src/config/cloudinary');
+
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'cms' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
 
 exports.get = async (req, res) => {
   const doc = await CmsContent.findOne();
@@ -8,10 +24,10 @@ exports.get = async (req, res) => {
 
 exports.save = async (req, res) => {
   const aboutBannerImage = req.files?.aboutBannerImage?.[0]
-    ? `/uploads/${req.files.aboutBannerImage[0].filename}`
+    ? await uploadToCloudinary(req.files.aboutBannerImage[0])
     : undefined;
   const aboutImage = req.files?.aboutImage?.[0]
-    ? `/uploads/${req.files.aboutImage[0].filename}`
+    ? await uploadToCloudinary(req.files.aboutImage[0])
     : undefined;
   const existing = await CmsContent.findOne();
   let aboutStats = req.body.aboutStats;

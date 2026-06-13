@@ -1,22 +1,41 @@
 const Destination = require('../models/destinationModel');
 const { logActivity } = require('../services/activityService');
 const slugify = require('../utils/slugify');
+const cloudinary = require('../src/config/cloudinary');
+
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'destinations' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
 
 const parseBoolean = value => {
   if (value === undefined) return undefined;
   return String(value) === 'true';
 };
 
-const buildImages = req => {
-  // Handle both upload.array (req.files is array) and upload.fields (req.files is object)
+const buildImages = async req => {
+  let allFiles = [];
   if (Array.isArray(req.files)) {
-    return req.files.map(file => `/uploads/${file.filename}`);
+    allFiles = req.files;
+  } else if (req.files && typeof req.files === 'object') {
+    allFiles = [...(req.files.images || []), ...(req.files.image || [])];
   }
-  if (req.files && typeof req.files === 'object') {
-    const allFiles = [...(req.files.images || []), ...(req.files.image || [])];
-    return allFiles.map(file => `/uploads/${file.filename}`);
+  
+  const urls = [];
+  for (const file of allFiles) {
+    urls.push(await uploadToCloudinary(file));
   }
-  return [];
+  return urls;
 };
 
 exports.list = async (req, res) => {
@@ -25,7 +44,7 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const images = buildImages(req);
+  const images = await buildImages(req);
   const slugSource = req.body.slug || req.body.name;
   const payload = {
     ...req.body,
@@ -44,7 +63,7 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const images = buildImages(req);
+  const images = await buildImages(req);
   let existingImages;
   if (req.body.existingImages) {
     existingImages = JSON.parse(req.body.existingImages);

@@ -1,6 +1,22 @@
 const Experience = require('../models/experienceModel');
 const { logActivity } = require('../services/activityService');
 const slugify = require('../utils/slugify');
+const cloudinary = require('../src/config/cloudinary');
+
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'experiences' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
 
 const parseBoolean = value => {
   if (value === undefined) return undefined;
@@ -13,7 +29,7 @@ exports.list = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+  const imageUrl = req.file ? await uploadToCloudinary(req.file) : undefined;
   const slugSource = req.body.slug || req.body.title;
   const payload = {
     title: req.body.title,
@@ -28,7 +44,7 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+  const imageUrl = req.file ? await uploadToCloudinary(req.file) : undefined;
   const slugSource = req.body.slug || req.body.title;
   const payload = {
     title: req.body.title,

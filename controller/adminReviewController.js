@@ -1,5 +1,21 @@
 const Review = require('../models/reviewModel');
 const { logActivity } = require('../services/activityService');
+const cloudinary = require('../src/config/cloudinary');
+
+const uploadToCloudinary = async file => {
+  if (!file) return undefined;
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'reviews' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    stream.end(file.buffer);
+  });
+  return result.secure_url;
+};
 
 const parseBoolean = value => {
   if (value === undefined) return undefined;
@@ -16,7 +32,7 @@ exports.create = async (req, res) => {
     return res.status(400).json({ message: 'Guest name is required' });
   }
 
-  const guestPhoto = req.file ? `/uploads/${req.file.filename}` : undefined;
+  const guestPhoto = req.file ? await uploadToCloudinary(req.file) : undefined;
   const payload = {
     ...req.body,
     guestPhoto,
@@ -35,7 +51,7 @@ exports.update = async (req, res) => {
     return res.status(400).json({ message: 'Guest name is required' });
   }
 
-  const guestPhoto = req.file ? `/uploads/${req.file.filename}` : req.body.existingGuestPhoto;
+  const guestPhoto = req.file ? await uploadToCloudinary(req.file) : req.body.existingGuestPhoto;
   const payload = {
     ...req.body,
     guestPhoto,
