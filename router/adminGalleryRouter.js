@@ -12,8 +12,8 @@ const {
 const router = express.Router();
 
 router.get('/', authMiddleware, requireAdmin, list);
-router.post('/', authMiddleware, requireAdmin, uploadMedia.array('media', 12), create);
-router.put('/:id', authMiddleware, requireAdmin, uploadMedia.single('media'), update);
+router.post('/', authMiddleware, requireAdmin, uploadMedia.array('mediaUrl', 12), create);
+router.put('/:id', authMiddleware, requireAdmin, uploadMedia.single('mediaUrl'), update);
 router.delete('/:id', authMiddleware, requireAdmin, remove);
 router.patch('/:id/toggle', authMiddleware, requireAdmin, toggle);
 
